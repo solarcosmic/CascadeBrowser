@@ -10,15 +10,15 @@ function createWindow () {
     backgroundColor: "#fff",
     webPreferences: {
       nativeWindowOpen: true,
-      devTools: true, // false if you want to remove dev tools access for the user
+      devTools: true,
       contextIsolation: true,
-      webviewTag: true, // https://www.electronjs.org/docs/api/webview-tag,
+      webviewTag: true,
       autoHideMenuBar: true
     },
   })
 
   win.setMenu(null);
-  win.loadFile('index.html')
+  win.loadFile('src/index.html')
   win.webContents.openDevTools();
 }
 

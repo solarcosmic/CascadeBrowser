@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    #container {
+      display: flex;
+      height: 90%;
+      min-height: 100vh;
+    }
+    #sidebar {
+      background-color: #202020;
+      width: 250px;
+      color: #ffffff;
+    }
+    webview {
+      right: 0;
+      flex-grow: 1;
+    }
+  </style>
+</head>
+<body>
+    <div id="container">
+      <div id="sidebar">
+        Example
+        <button id="new-tab">New Tab</button>
+      </div>
+      <webview
+        src="https://www.google.com"
+        id="webview"
+        data-home="https://google.com"
+      ></webview>
+    </div>
+  <script src="script.js"></script>
+</body>
+</html>
