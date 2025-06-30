@@ -1,0 +1,17 @@
+{
+  "name": "cascadebrowser",
+  "version": "1.0.0",
+  "description": "A proof-of-concept web browser built in Electron",
+  "homepage": "https://github.com/solarcosmic/CascadeBrowser#readme",
+  "license": "MIT",
+  "author": "solarcosmic",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "electron": "^37.1.0"
+  }
+}
