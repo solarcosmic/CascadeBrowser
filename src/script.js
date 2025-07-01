@@ -7,7 +7,7 @@ function createWebView(url, uuid, preload) {
     webView.classList.add("view-box");
     webView.src = url;
     //if (preload) webView.setAttribute("preload", preload);
-    webView.setAttribute("allowpopups", true);
+    //webView.setAttribute("allowpopups", true);
     document.getElementById("container").appendChild(webView);
     attachContextMenu(webView);
     webView.addEventListener('dom-ready', () => {
@@ -25,8 +25,6 @@ function attachContextMenu(webView) {
     webView.addEventListener('context-menu', async (event) => {
         const selectedText = await webView.executeJavaScript('window.getSelection().toString()');
         if (selectedText && selectedText.trim().length > 0) {
-            console.log(selectedText);
-            // Show your custom context menu here, e.g.:
             window.electronAPI.showContextMenu("selection", selectedText);
         } else if (!selectedText) {
             window.electronAPI.showContextMenu("page");
@@ -91,8 +89,8 @@ function truncateString(str, num) {
     }
 }
 
-function createOrModifyTabButton(webView, uuid) {
-    const title = truncateString((webView.getTitle() || "Webpage"), 24);
+function createOrModifyTabButton(webView, uuid, customTitle) {
+    const title = truncateString((customTitle !== undefined ? customTitle : (webView.getTitle() || "Loading...")), 21);
     const foundButton = document.getElementById("viewbutton_" + uuid);
     if (foundButton) {
         removeTextNodes(foundButton);
@@ -123,27 +121,73 @@ function removeTextNodes(element) {
 }
 
 function createNewTab(url) {
-    //const viewId = uuidv4();
     hideAllTabs();
     const viewId = crypto.randomUUID();
-    const firstView = createWebView((url || "https://google.com"), viewId, "preload-webview.js");
+    const firstView = createWebView((url || "https://google.com"), viewId);
     firstView.setAttribute("id", "webview_" + viewId);
+
+    const button = createOrModifyTabButton(firstView, viewId, "Loading...");
+    if (button) {
+        button.classList.add("current_tab");
+        const favicon = button.querySelector(".side_button");
+        favicon.src = "";
+    }
 
     firstView.addEventListener('dom-ready', () => {
         switchTab(firstView);
+        if (!firstView.getURL().startsWith("view-source:")) {
+            firstView.style.backgroundColor = "#ffffff";
+        } else {
+            firstView.style.backgroundColor = "#141414";
+        }
         firstView.addEventListener('will-navigate', (e) => {
             if (firstView.id == focusedTab.id) {
                 document.getElementById("url-box").value = e.url;
             }
         });
-        const button = createOrModifyTabButton(firstView, viewId);
+        createOrModifyTabButton(firstView, viewId);
         if (button) {
             const favicon = button.querySelector(".side_button");
             firstView.addEventListener('page-favicon-updated', (e) => {
-                if (e.favicons[0] != favicon.src) favicon.src = e.favicons[0]; // prevent spam
+                if (e.favicons[0] != favicon.src) favicon.src = e.favicons[0];
             });
         }
     })
+}
+
+function getCorrespondingButton(webView) {
+    const webViewStr = webView.id.replace("webview_", "");
+    return document.querySelector("#viewbutton_" + webViewStr);
+}
+
+function getCorrespondingTab(button) {
+    const buttonStr = button.id.replace("viewbutton_", "");
+    return document.querySelector("#webview_" + buttonStr);
+}
+
+function goToURL(webView, url) {
+    if (url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("cascade://") ||
+    url.startsWith("view-source:") ||
+    url.startsWith("blob:")) {
+        webView.loadURL(url);
+    } else {
+        // assume they're searching
+        webView.loadURL("https://www.google.com/search?client=cascade&q=" + url);
+    }
+}
+
+function closeTab(webView) {
+    if (!webView) return;
+    const button = getCorrespondingButton(webView);
+    // remove tab logic
+    focusedTab.remove();
+    focusedTab = null;
+    if (button.nextElementSibling) {
+        switchTab(getCorrespondingTab(button.nextElementSibling));
+    }
+    button.remove();
 }
 
 document.getElementById("new-tab").addEventListener("click", () => {
@@ -174,7 +218,14 @@ document.addEventListener("DOMContentLoaded", () => {
         url_box.addEventListener("keypress", (e) => {
             if (e["key"] == "Enter") {
                 url_box.blur();
-                if (focusedTab) focusedTab.loadURL(url_box.value);
+                if (focusedTab) {
+                    if (url_box.value.includes("cascade://newtab")) {
+                        var new_tab = 'file://' + __dirname + '/src/new_tab.html';
+                        goToURL(focusedTab, new_tab);
+                    } else {
+                        goToURL(focusedTab, url_box.value);
+                    }
+                }
             }
         });
     }
@@ -184,7 +235,7 @@ window.electronAPI.onPrintCurrentTabRequest(() => {
     if (focusedTab) focusedTab.print();
 })
 
-window.electronAPI.onContextMenuResponse((data) => {
+window.electronAPI.onContextMenuResponse(async (data) => {
     const action = data["action"];
     const text = data["text"]
     if (!action) console.error("No action provided");
@@ -196,10 +247,21 @@ window.electronAPI.onContextMenuResponse((data) => {
         if (focusedTab) createNewTab("https://www.google.com/search?client=cascade&q=" + text);
     } else if (action == "inspect-element") {
         if (focusedTab) focusedTab.openDevTools();
+    } else if (action == "print-page") {
+        if (focusedTab) focusedTab.print();
+    } else if (action == "view-page-source") {
+        if (focusedTab) goToURL(focusedTab, "view-source:" + focusedTab.getURL());
     }
 })
 
 window.electronAPI.onTabRefresh((isCache) => {
-    console.log(isCache);
-    if (focusedTab) focusedTab.print();
+    if (focusedTab) focusedTab.reload();
+})
+
+window.electronAPI.onTabClose(() => {
+    if (focusedTab) closeTab(focusedTab);
+})
+
+window.electronAPI.onTabNew(() => {
+    createNewTab();
 })

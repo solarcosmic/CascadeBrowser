@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 solarcosmic.
+ * This project is licensed under the MIT license.
+ * To view the license, see <https://opensource.org/licenses/MIT>.
+*/
 const { app, BrowserWindow, shell, ipcMain, globalShortcut, Menu, clipboard } = require('electron/main')
 const path = require('node:path')
 
@@ -46,6 +51,12 @@ function createWindow () {
   });
   globalShortcut.register("CmdOrCtrl+R", () => {
     win.isFocused() && win.webContents.send('refresh-tab', false);
+  });
+  globalShortcut.register("CmdOrCtrl+W", () => {
+    win.isFocused() && win.webContents.send('close-tab');
+  });
+  globalShortcut.register("CmdOrCtrl+T", () => {
+    win.isFocused() && win.webContents.send('new-tab');
   });
 }
 
@@ -98,6 +109,37 @@ ipcMain.on('show-context-menu', (event, type, text) => {
       },
       {
         label: 'Inspect Element (Entire Page)',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'inspect-element' });
+        }
+      },
+    ]);
+    menu.popup();
+  } else if (type == "page") {
+    const menu = Menu.buildFromTemplate([
+      {
+        label: 'Print Page',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'print-page', text });
+        }
+      },
+      {
+        label: 'Select All',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'select-all' });
+        }
+      },
+      {
+        type: "separator"
+      },
+      {
+        label: 'Page Source',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'view-page-source' });
+        }
+      },
+      {
+        label: 'Inspect Element',
         click: () => {
           event.sender.send('context-menu-action', { action: 'inspect-element' });
         }

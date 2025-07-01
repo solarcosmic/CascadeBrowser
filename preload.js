@@ -6,4 +6,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showContextMenu: (type, selection) => ipcRenderer.send('show-context-menu', type, selection),
   onContextMenuResponse: (callback) => ipcRenderer.on('context-menu-action', (_event, action) => callback(action)),
   onTabRefresh: (callback) => ipcRenderer.on('refresh-tab', (_event, withCache) => callback(withCache)),
-})
+  onTabClose: (callback) => ipcRenderer.on('close-tab', (_event) => callback()),
+  onTabNew: (callback) => ipcRenderer.on('new-tab', (_event) => callback()),
+});
