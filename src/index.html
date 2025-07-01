@@ -8,6 +8,7 @@
     body {
       margin: 0;
       padding: 0;
+      background-color: #141414;
     }
     #container {
       display: flex;
@@ -19,23 +20,49 @@
       width: 250px;
       color: #ffffff;
     }
-    webview {
+    .view-box {
       right: 0;
       flex-grow: 1;
+      background-color: #ffffff;
+    }
+    #tablist {
+      display: flex;
+      flex-direction: column;
+    }
+    button {
+      text-align: left;
+      background-color: #202020;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+    }
+    button:hover {
+      background-color: #272727;
+    }
+    button:active {
+      transform: scale(0.85);
+    }
+    button .current_tab {
+      background-color: #272727;
+    }
+    .solid {
+      border-top: 3px solid #1f1f1f;
+    }
+    hr {
+      background-color: #141414;
     }
   </style>
 </head>
 <body>
     <div id="container">
       <div id="sidebar">
-        Example
-        <button id="new-tab">New Tab</button>
+        <button id="refresh">Refresh</button>
+        <hr>
+        <div id="tablist">
+          <button id="new-tab">+ New Tab</button>
+        </div>
       </div>
-      <webview
-        src="https://www.google.com"
-        id="webview"
-        data-home="https://google.com"
-      ></webview>
     </div>
   <script src="script.js"></script>
 </body>
