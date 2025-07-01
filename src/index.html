@@ -29,22 +29,23 @@
       display: flex;
       flex-direction: column;
     }
-    button {
+    #tablist button {
       text-align: left;
       background-color: #202020;
       color: #ffffff;
       border: none;
       border-radius: 8px;
       padding: 10px 20px;
+      margin-top: 5px;
     }
-    button:hover {
+    #tablist button:hover {
       background-color: #272727;
     }
-    button:active {
+    #tablist button:active {
       transform: scale(0.85);
     }
-    button .current_tab {
-      background-color: #272727;
+    #tablist .current_tab {
+      background-color: #3d3d3d;
     }
     .solid {
       border-top: 3px solid #1f1f1f;
@@ -52,15 +53,48 @@
     hr {
       background-color: #141414;
     }
+    .svg_side_button {
+      width: 16px;
+      height: 16px;
+      filter: invert(100%) sepia(0%) saturate(2%) hue-rotate(178deg) brightness(107%) contrast(101%);
+    }
+    .side_button {
+      width: 16px;
+      height: 16px;
+    }
+    #url-box {
+      display: block;
+      margin: 0 auto;
+      min-width: 75%;
+      margin-top: 15px;
+      padding: 10px 15px;
+      background-color: #3d3d3d;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      font-size: 15px;
+    }
+    #back, #forward, #refresh {
+      background-color: #3d3d3d;
+      border: none;
+      border-radius: 2px;
+    }
+    .favicon_button {
+      width: 16px;
+      height: 16px;
+    }
   </style>
 </head>
 <body>
     <div id="container">
       <div id="sidebar">
-        <button id="refresh">Refresh</button>
+        <button id="back"><img class="svg_side_button" src="assets/arrow-left-solid.svg"></img></button>
+        <button id="forward"><img class="svg_side_button" src="assets/arrow-right-solid.svg"></img></button>
+        <button id="refresh"><img class="svg_side_button" src="assets/rotate-right-solid.svg"></img></button>
+        <input type="text" id="url-box"></input>
         <hr>
         <div id="tablist">
-          <button id="new-tab">+ New Tab</button>
+          <button id="new-tab"><img class="svg_side_button" src="assets/plus-solid.svg" style="width: 12px; height: 12px; margin-right: 5px; margin-bottom: -1.75px;"></img> New Tab</button>
         </div>
       </div>
     </div>

@@ -1,5 +1,13 @@
-const { app, BrowserWindow, shell, ipcMain, globalShortcut } = require('electron/main')
+const { app, BrowserWindow, shell, ipcMain, globalShortcut, Menu, clipboard } = require('electron/main')
 const path = require('node:path')
+
+const menu = Menu.buildFromTemplate([
+  { label: 'Copy' },
+  { label: 'Select All' },
+  { label: 'Print Selection'},
+  { label: 'Search Google for this selection'},
+  { label: 'Inspect Element'},
+]);
 
 function createWindow () {
   const win = new BrowserWindow({
@@ -35,6 +43,9 @@ function createWindow () {
   globalShortcut.register("CmdOrCtrl+P", () => {
     win.isFocused() && win.webContents.send('print-current-tab');
   });
+  globalShortcut.register("CmdOrCtrl+R", () => {
+    win.isFocused() && win.webContents.send('refresh-tab', false);
+  });
 }
 
 app.whenReady().then(() => {
@@ -52,3 +63,45 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
+
+/* https://stackoverflow.com/questions/1301512/truncate-a-string-straight-javascript */
+function truncateString(str, num) {
+    if (str.length > num) {
+        return str.slice(0, num) + "...";
+    } else {
+        return str;
+    }
+}
+
+ipcMain.on('show-context-menu', (event, type, text) => {
+  if (type == "selection") {
+    const menu = Menu.buildFromTemplate([
+      {
+        label: 'Copy',
+        click: () => {
+          clipboard.writeText(text);
+          event.sender.send('context-menu-action', { action: 'copy', text });
+        }
+      },
+      {
+        label: 'Select All',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'select-all' });
+        }
+      },
+      {
+        label: 'Search Google for "' + truncateString(text, 25) + '"',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'search-google', text });
+        }
+      },
+      {
+        label: 'Inspect Element (Entire Page)',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'inspect-element' });
+        }
+      },
+    ]);
+    menu.popup();
+  }
+});
