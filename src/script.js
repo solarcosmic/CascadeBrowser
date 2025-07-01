@@ -1,8 +1,14 @@
-/* const { v4: uuidv4 } = require('uuid'); */
-var listTabs = {};
+/*
+ * Copyright (c) 2025 solarcosmic.
+ * This project is licensed under the MIT license.
+ * To view the license, see <https://opensource.org/licenses/MIT>.
+*/
 var focusedTab = null;
 
-function createWebView(url, uuid, preload) {
+/*
+ * Creates a WebView object, used to display the Chromium tab.
+*/
+function createWebView(url, uuid) {
     const webView = document.createElement("webview");
     webView.classList.add("view-box");
     webView.src = url;
@@ -21,19 +27,51 @@ function createWebView(url, uuid, preload) {
     return webView;
 }
 
-function attachContextMenu(webView) {
+/*
+ * Adds the context menus (selection, page, image) so that they can be used.
+*/
+var currentContextImage = null;
+function attachContextMenu(webView, isMenu = false) {
     webView.addEventListener('context-menu', async (event) => {
+        // Check if right-clicked on an image
+        const imgSrc = await webView.executeJavaScript(`
+            (function() {
+                let el = document.elementFromPoint(${event.params.x}, ${event.params.y});
+                if (el && el.tagName && el.tagName.toLowerCase() === 'img') return el.src;
+                return null;
+            })();
+        `);
+
+        if (imgSrc) {
+            currentContextImage = imgSrc;
+            window.electronAPI.showContextMenu("image", imgSrc);
+            return;
+        }
+
         const selectedText = await webView.executeJavaScript('window.getSelection().toString()');
         if (selectedText && selectedText.trim().length > 0) {
             window.electronAPI.showContextMenu("selection", selectedText);
-        } else if (!selectedText) {
+        } else {
             window.electronAPI.showContextMenu("page");
         }
     });
 }
 
+/*
+ * Sets the title of the window.
+*/
 function setWindowTitle(title) {
     document.title = title + " ⎯ Cascade Browser";
+}
+
+function getElementAtPoint(x, y) {
+    return document.elementFromPoint(x, y);
+}
+
+async function getElementAtWebViewPoint(x, y) {
+    const returnPoint = await webView.executeJavaScript(`document.elementFromPoint(${x}, ${y});`);
+    if (returnPoint) return returnPoint;
+    return null;
 }
 
 /*
@@ -52,6 +90,9 @@ function switchTab(webView) {
     document.getElementById("url-box").value = webView.getURL();
 }
 
+/*
+ * Loops through all tabs and hides them, then sets the focused tab to null.
+*/
 function hideAllTabs() {
     const views = document.getElementsByClassName("view-box");
     for (let i = 0; i < views.length; i++) {
@@ -60,6 +101,9 @@ function hideAllTabs() {
     focusedTab = null;
 }
 
+/*
+ * This removes any tab from having the "active" effect (light grey).
+*/
 function removeActiveTabClass() {
     const buttons = document.querySelectorAll(".current_tab")
     buttons.forEach((button) => {
@@ -67,10 +111,16 @@ function removeActiveTabClass() {
     });
 }
 
+/*
+ * Refreshes the tab provided.
+*/
 function refreshTab(currentTab) {
     currentTab.reload();
 }
 
+/*
+ * Sets the browser tab in the direction you want it to go.
+*/
 function goDirection(currentTab, direction = "back") {
     if (!currentTab) return;
     if (direction == "back") {
@@ -89,6 +139,9 @@ function truncateString(str, num) {
     }
 }
 
+/*
+ * Modifies the tab button in the tab list, or if one doesn't exist, creates one.
+*/
 function createOrModifyTabButton(webView, uuid, customTitle) {
     const title = truncateString((customTitle !== undefined ? customTitle : (webView.getTitle() || "Loading...")), 21);
     const foundButton = document.getElementById("viewbutton_" + uuid);
@@ -111,6 +164,9 @@ function createOrModifyTabButton(webView, uuid, customTitle) {
     }
 }
 
+/*
+ * Removes any text objects inside an element.
+*/
 function removeTextNodes(element) {
     const childNodes = Array.from(element.childNodes);
     for (const node of childNodes) {
@@ -120,9 +176,12 @@ function removeTextNodes(element) {
     }
 }
 
+/*
+ * This is where tabs get created, assigned a random UUID to refer to, and does other cool stuff.
+*/
 function createNewTab(url) {
     hideAllTabs();
-    const viewId = crypto.randomUUID();
+    const viewId = crypto.randomUUID(); // sufficient enough, UUID
     const firstView = createWebView((url || "https://google.com"), viewId);
     firstView.setAttribute("id", "webview_" + viewId);
 
@@ -130,7 +189,7 @@ function createNewTab(url) {
     if (button) {
         button.classList.add("current_tab");
         const favicon = button.querySelector(".side_button");
-        favicon.src = "";
+        favicon.src = ""; // change this later if wanted, for the loading favicon, gif ??
     }
 
     firstView.addEventListener('dom-ready', () => {
@@ -155,16 +214,27 @@ function createNewTab(url) {
     })
 }
 
+/*
+ * Handy function to get the button from a WebView
+*/
 function getCorrespondingButton(webView) {
     const webViewStr = webView.id.replace("webview_", "");
     return document.querySelector("#viewbutton_" + webViewStr);
 }
 
+/*
+ * Handy function to get the WebView from a button
+*/
 function getCorrespondingTab(button) {
     const buttonStr = button.id.replace("viewbutton_", "");
     return document.querySelector("#webview_" + buttonStr);
 }
 
+/*
+ * Function that handles the redirecting of all URLs except the ones in the frames themselves.
+ * What I mean by that is if any part in this script wants the URL to go somewhere, it calls it
+ * through this function, but if a page inside a WebView changes the URL, this will not be fired.
+*/
 function goToURL(webView, url) {
     if (url.startsWith("http://") ||
     url.startsWith("https://") ||
@@ -178,6 +248,10 @@ function goToURL(webView, url) {
     }
 }
 
+/*
+ * Closes a tab, removes its WebView, then removes its button.
+ * Also swaps the tab to the next tab if possible.
+*/
 function closeTab(webView) {
     if (!webView) return;
     const button = getCorrespondingButton(webView);
@@ -190,6 +264,7 @@ function closeTab(webView) {
     button.remove();
 }
 
+// Event Handlers
 document.getElementById("new-tab").addEventListener("click", () => {
     createNewTab();
 })
@@ -204,6 +279,10 @@ document.getElementById("back").addEventListener("click", () => {
 
 document.getElementById("forward").addEventListener("click", () => {
     if (focusedTab) goDirection(focusedTab, "forward");
+});
+
+document.getElementById("menu").addEventListener("click", () => {
+    window.electronAPI.showContextMenu("menu");
 });
 
 window.electronAPI.onTargetBlankTabOpen((url) => {
@@ -251,8 +330,32 @@ window.electronAPI.onContextMenuResponse(async (data) => {
         if (focusedTab) focusedTab.print();
     } else if (action == "view-page-source") {
         if (focusedTab) goToURL(focusedTab, "view-source:" + focusedTab.getURL());
+    } else if (action == "open-image-in-new-tab") {
+        if (focusedTab && currentContextImage) createNewTab(currentContextImage);
+    } else if (action == "copy-image-address") {
+        if (focusedTab && currentContextImage) window.electronAPI.copyToClipboard(currentContextImage);
     }
 })
+/*
+ else if (action == "inspect-element-region") {
+        if (focusedTab) {
+            if (contextRightClickX != null && contextRightClickY != null) {
+                const imgSrc = await focusedTab.executeJavaScript(`
+                    (function() {
+                        const scrollX = window.scrollX || document.documentElement.scrollLeft || document.body.scrollLeft || 0;
+                        const scrollY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+                        let el = document.elementFromPoint(${contextRightClickX} - scrollX, ${contextRightClickY} - scrollY);
+                        if (el && el.tagName && el.tagName.toLowerCase() === 'img') return el.src;
+                        return null;
+                    })();
+                `);
+                if (imgSrc) {
+                    focusedTab.inspectElement(contextRightClickX, contextRightClickY);
+                }
+            }
+        }
+    }
+*/
 
 window.electronAPI.onTabRefresh((isCache) => {
     if (focusedTab) focusedTab.reload();
@@ -265,3 +368,7 @@ window.electronAPI.onTabClose(() => {
 window.electronAPI.onTabNew(() => {
     createNewTab();
 })
+
+window.electronAPI.onOpenTab((url) => {
+    createNewTab(url);
+});

@@ -3,18 +3,10 @@
  * This project is licensed under the MIT license.
  * To view the license, see <https://opensource.org/licenses/MIT>.
 */
-const { app, BrowserWindow, shell, ipcMain, globalShortcut, Menu, clipboard } = require('electron/main')
-const path = require('node:path')
+const { app, BrowserWindow, shell, ipcMain, globalShortcut, Menu, clipboard } = require("electron/main");
+const path = require("node:path");
 
-const menu = Menu.buildFromTemplate([
-  { label: 'Copy' },
-  { label: 'Select All' },
-  { label: 'Print Selection'},
-  { label: 'Search Google for this selection'},
-  { label: 'Inspect Element'},
-]);
-
-function createWindow () {
+function createWindow() {
   const win = new BrowserWindow({
     width: 1024,
     height: 768,
@@ -58,6 +50,9 @@ function createWindow () {
   globalShortcut.register("CmdOrCtrl+T", () => {
     win.isFocused() && win.webContents.send('new-tab');
   });
+  ipcMain.on('open-tab', (event, url) => {
+    win.webContents.send('open-tab', url);
+  });
 }
 
 app.whenReady().then(() => {
@@ -85,7 +80,11 @@ function truncateString(str, num) {
     }
 }
 
-ipcMain.on('show-context-menu', (event, type, text) => {
+ipcMain.on("copy-to-clipboard", (event, item) => {
+  clipboard.writeText(item);
+});
+
+ipcMain.on("show-context-menu", (event, type, text) => {
   if (type == "selection") {
     const menu = Menu.buildFromTemplate([
       {
@@ -144,6 +143,61 @@ ipcMain.on('show-context-menu', (event, type, text) => {
           event.sender.send('context-menu-action', { action: 'inspect-element' });
         }
       },
+    ]);
+    menu.popup();
+  } else if (type == "image") {
+    const menu = Menu.buildFromTemplate([
+      {
+        label: 'Open image in New Tab',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'open-image-in-new-tab', text });
+        }
+      },
+      /* {
+        label: 'Copy Image',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'copy-image' });
+        }
+      }, */
+      {
+        label: 'Copy Image Address',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'copy-image-address' });
+        }
+      },
+      {
+        type: "separator"
+      },
+      {
+        label: 'Inspect Element (Entire Page)',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'inspect-element' });
+        }
+      },
+    ]);
+    menu.popup();
+  } else if (type == "menu") {
+    const menu = Menu.buildFromTemplate([
+      {
+        label: 'About Cascade',
+        click: () => {
+          //event.sender.send('context-menu-action', { action: 'about-cascade', text });
+          const about = new BrowserWindow({
+            width: 324,
+            height: 450,
+            //titleBarStyle: 'hidden',
+            //frame: false,
+            backgroundColor: "#fff",
+            webPreferences: {
+              preload: path.join(__dirname, 'preload.js')
+            },
+            frame: true
+          })
+
+          about.setMenu(null);
+          about.loadFile('src/about.html')
+        }
+      }
     ]);
     menu.popup();
   }

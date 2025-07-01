@@ -94,7 +94,15 @@
     #controls {
       display: flex;
       margin-top: 5px;
-      justify-content: flex-end;
+      justify-content: space-between;
+      margin-left: 5px;
+      align-items: center;
+    }
+    #right-controls {
+      display: flex;
+    }
+    #right-controls button {
+      margin-left: 5px;
     }
     #controls button {
       margin-right: 5px;
@@ -113,9 +121,12 @@
     <div id="container">
       <div id="sidebar">
         <div id="controls">
-          <button id="back"><img class="svg_side_button" src="assets/arrow-left-solid.svg"></img></button>
-          <button id="forward"><img class="svg_side_button" src="assets/arrow-right-solid.svg"></img></button>
-          <button id="refresh"><img class="svg_side_button" src="assets/rotate-right-solid.svg"></img></button>
+          <button id="menu"><img class="svg_side_button" src="assets/ellipsis-vertical-solid.svg"></img></button>
+          <div id="right-controls">
+            <button id="back"><img class="svg_side_button" src="assets/arrow-left-solid.svg"></img></button>
+            <button id="forward"><img class="svg_side_button" src="assets/arrow-right-solid.svg"></img></button>
+            <button id="refresh"><img class="svg_side_button" src="assets/rotate-right-solid.svg"></img></button>
+          </div>
         </div>
         <input type="text" id="url-box"></input>
         <hr>

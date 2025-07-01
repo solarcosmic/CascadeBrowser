@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Cascade</title>
+    <style>
+        @font-face {
+            font-family: "Inter";
+            src: url("assets/Inter.ttf");
+        }
+        body {
+            background-color: #141414;
+            user-select: none;
+        }
+        * {
+            color: #ffffff;
+            font-family: "Inter", sans-serif;
+        }
+        div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        img {
+            width: 200px;
+            height: 200px;
+        }
+    </style>
+</head>
+<body style="text-align: center;">
+    <div>
+        <img src="assets/cascade_logo_square.png"></img>
+        
+    </div>
+    <div style="font-size: 38px;">Cascade</div>
+    <p>A proof-of-concept simplistic web browser built in Electron.</p>
+    <a href="#" id="github-link" onclick="link_click('GitHub')">GitHub</a>
+    <script>
+        function link_click(link_name) {
+            if (link_name == "GitHub") window.electronAPI.openTab("https://github.com/solarcosmic/CascadeBrowser");
+            window.close();
+        }
+    </script>
+</body>
+</html>
