@@ -5,10 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
   <style>
+    @font-face {
+      font-family: "Inter";
+      src: url("assets/Inter.ttf");
+    }
     body {
       margin: 0;
       padding: 0;
       background-color: #141414;
+    }
+    * {
+      font-family: "Inter", sans-serif;
     }
     #container {
       display: flex;
@@ -16,7 +23,7 @@
       min-height: 100vh;
     }
     #sidebar {
-      background-color: #202020;
+      background-color: #1a1a1a;
       width: 250px;
       color: #ffffff;
     }
@@ -28,10 +35,12 @@
     #tablist {
       display: flex;
       flex-direction: column;
+      padding: 5px 5px;
+      margin-top: -7.5px;
     }
     #tablist button {
       text-align: left;
-      background-color: #202020;
+      background-color: #1a1a1a;
       color: #ffffff;
       border: none;
       border-radius: 8px;
@@ -51,7 +60,10 @@
       border-top: 3px solid #1f1f1f;
     }
     hr {
-      background-color: #141414;
+      background-color: #292929;
+      border: none;
+      padding: 0.5px 0.5px;
+      max-width: 85%;
     }
     .svg_side_button {
       width: 16px;
@@ -66,31 +78,45 @@
       display: block;
       margin: 0 auto;
       min-width: 75%;
+      max-width: 80%;
       margin-top: 15px;
       padding: 10px 15px;
-      background-color: #3d3d3d;
+      background-color: #2c2c2c;
       color: #ffffff;
       border: none;
       border-radius: 4px;
       font-size: 15px;
     }
-    #back, #forward, #refresh {
-      background-color: #3d3d3d;
-      border: none;
-      border-radius: 2px;
-    }
     .favicon_button {
       width: 16px;
       height: 16px;
+    }
+    #controls {
+      display: flex;
+      margin-top: 5px;
+      justify-content: flex-end;
+    }
+    #controls button {
+      margin-right: 5px;
+      width: 32px;
+      height: 32px;
+      background-color: #1a1a1a;
+      border: none;
+      border-radius: 2px;
+    }
+    #controls button:hover {
+      background-color: #252525;
     }
   </style>
 </head>
 <body>
     <div id="container">
       <div id="sidebar">
-        <button id="back"><img class="svg_side_button" src="assets/arrow-left-solid.svg"></img></button>
-        <button id="forward"><img class="svg_side_button" src="assets/arrow-right-solid.svg"></img></button>
-        <button id="refresh"><img class="svg_side_button" src="assets/rotate-right-solid.svg"></img></button>
+        <div id="controls">
+          <button id="back"><img class="svg_side_button" src="assets/arrow-left-solid.svg"></img></button>
+          <button id="forward"><img class="svg_side_button" src="assets/arrow-right-solid.svg"></img></button>
+          <button id="refresh"><img class="svg_side_button" src="assets/rotate-right-solid.svg"></img></button>
+        </div>
         <input type="text" id="url-box"></input>
         <hr>
         <div id="tablist">

@@ -24,8 +24,9 @@ function createWindow () {
       contextIsolation: true,
       webviewTag: true,
       autoHideMenuBar: true,
-      nativeWindowOpen: true
+      nativeWindowOpen: true,
     },
+    frame: true
   })
 
   win.setMenu(null);

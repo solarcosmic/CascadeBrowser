@@ -28,8 +28,14 @@ function attachContextMenu(webView) {
             console.log(selectedText);
             // Show your custom context menu here, e.g.:
             window.electronAPI.showContextMenu("selection", selectedText);
+        } else if (!selectedText) {
+            window.electronAPI.showContextMenu("page");
         }
     });
+}
+
+function setWindowTitle(title) {
+    document.title = title + " ⎯ Cascade Browser";
 }
 
 /*
@@ -44,6 +50,8 @@ function switchTab(webView) {
     removeActiveTabClass();
     const button = document.querySelector("#viewbutton_" + webViewStr);
     if (button) button.classList.add("current_tab");
+    setWindowTitle(webView.getTitle());
+    document.getElementById("url-box").value = webView.getURL();
 }
 
 function hideAllTabs() {
@@ -84,7 +92,7 @@ function truncateString(str, num) {
 }
 
 function createOrModifyTabButton(webView, uuid) {
-    const title = truncateString((webView.getTitle() || "Webpage"), 27);
+    const title = truncateString((webView.getTitle() || "Webpage"), 24);
     const foundButton = document.getElementById("viewbutton_" + uuid);
     if (foundButton) {
         removeTextNodes(foundButton);
@@ -94,7 +102,7 @@ function createOrModifyTabButton(webView, uuid) {
         if (uuid) button.setAttribute("id", "viewbutton_" + uuid);
         const favicon = document.createElement("img");
         favicon.classList.add("side_button");
-        favicon.style = "width: 12px; height: 12px; margin-right: 5px; margin-bottom: -1.75px;";
+        favicon.style = "width: 12px; height: 12px; margin-right: 10px; margin-bottom: -1.75px;";
         button.appendChild(favicon);
         button.appendChild(document.createTextNode(title));
         button.addEventListener("click", () => {
@@ -124,7 +132,9 @@ function createNewTab(url) {
     firstView.addEventListener('dom-ready', () => {
         switchTab(firstView);
         firstView.addEventListener('will-navigate', (e) => {
-            document.getElementById("url-box").value = e.url;
+            if (firstView.id == focusedTab.id) {
+                document.getElementById("url-box").value = e.url;
+            }
         });
         const button = createOrModifyTabButton(firstView, viewId);
         if (button) {
@@ -159,6 +169,15 @@ window.electronAPI.onTargetBlankTabOpen((url) => {
 document.addEventListener("DOMContentLoaded", () => {
     createNewTab();
     document.title = "Cascade Browser";
+    const url_box = document.getElementById("url-box");
+    if (url_box) {
+        url_box.addEventListener("keypress", (e) => {
+            if (e["key"] == "Enter") {
+                url_box.blur();
+                if (focusedTab) focusedTab.loadURL(url_box.value);
+            }
+        });
+    }
 });
 
 window.electronAPI.onPrintCurrentTabRequest(() => {
