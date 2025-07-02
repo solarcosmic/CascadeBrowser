@@ -33,8 +33,8 @@ function createWebView(url, uuid) {
             }
             addLinkContextMenuListener(window);
         `);
-        const modifiedUserAgent = webView.getUserAgent().replace(/Electron\/\S*\s*/i, "").replace("cascadebrowser", "Cascade");
-        webView.setUserAgent(modifiedUserAgent);
+        //const modifiedUserAgent = webView.getUserAgent().replace(/Electron\/\S*\s*/i, "").replace("cascadebrowser", "Cascade");
+        //webView.setUserAgent(modifiedUserAgent);
         webView.addEventListener("page-title-updated", (e, title, explicitSet) => {
             if (focusedTab == webView) {
                 createOrModifyTabButton(webView, uuid);
