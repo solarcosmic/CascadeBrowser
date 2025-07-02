@@ -12,11 +12,29 @@ function createWebView(url, uuid) {
     const webView = document.createElement("webview");
     webView.classList.add("view-box");
     webView.src = url;
-    //if (preload) webView.setAttribute("preload", preload);
-    //webView.setAttribute("allowpopups", true);
+    webView.setAttribute("allowpopups", true);
+    webView.setAttribute("preload", "../preload.js");
     document.getElementById("container").appendChild(webView);
     attachContextMenu(webView);
     webView.addEventListener('dom-ready', () => {
+        // hacky method to get links to work properly. does not support iframes and that stuff.
+        webView.executeJavaScript(`
+            function addLinkContextMenuListener(win) {
+                win.document.addEventListener('contextmenu', function(e) {
+                    let el = e.target;
+                    while (el && el !== win.document.body) {
+                        if (el.tagName && el.tagName.toLowerCase() === 'a' && el.href) {
+                            win.postMessage({ type: 'cascade-link-context', href: el.href }, '*');
+                            break;
+                        }
+                        el = el.parentElement;
+                    }
+                }, true);
+            }
+            addLinkContextMenuListener(window);
+        `);
+        const modifiedUserAgent = webView.getUserAgent().replace(/Electron\/\S*\s*/i, "").replace("cascadebrowser", "Cascade");
+        webView.setUserAgent(modifiedUserAgent);
         webView.addEventListener("page-title-updated", (e, title, explicitSet) => {
             if (focusedTab == webView) {
                 createOrModifyTabButton(webView, uuid);
@@ -24,6 +42,9 @@ function createWebView(url, uuid) {
             }
         })
     })
+    webView.addEventListener('new-window', (e) => {
+        createNewTab(e.url);
+    });
     return webView;
 }
 
@@ -31,9 +52,22 @@ function createWebView(url, uuid) {
  * Adds the context menus (selection, page, image) so that they can be used.
 */
 var currentContextImage = null;
+var currentContextLink = null;
 function attachContextMenu(webView, isMenu = false) {
+    webView.addEventListener('ipc-message', (event) => {
+        if (event.channel === 'cascade-link-context') {
+            currentContextLink = event.args[0];
+            window.electronAPI.showContextMenu("link", currentContextLink);
+        }
+    });
+
     webView.addEventListener('context-menu', async (event) => {
-        // Check if right-clicked on an image
+        if (currentContextLink) {
+            currentContextLink = null;
+            return;
+        }
+
+        // image
         const imgSrc = await webView.executeJavaScript(`
             (function() {
                 let el = document.elementFromPoint(${event.params.x}, ${event.params.y});
@@ -150,12 +184,26 @@ function createOrModifyTabButton(webView, uuid, customTitle) {
         foundButton.appendChild(document.createTextNode(title));
     } else {
         const button = document.createElement("button");
+        button.classList.add("tab-button");
         if (uuid) button.setAttribute("id", "viewbutton_" + uuid);
+
         const favicon = document.createElement("img");
         favicon.classList.add("side_button");
         favicon.style = "width: 12px; height: 12px; margin-right: 10px; margin-bottom: -1.75px;";
         button.appendChild(favicon);
+
         button.appendChild(document.createTextNode(title));
+
+        const closeBtn = document.createElement("img");
+        closeBtn.src = "assets/xmark-solid.svg";
+        closeBtn.classList.add("tab-close-btn");
+        closeBtn.classList.add("svg_side_button");
+        closeBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            closeTab(webView);
+        });
+        button.appendChild(closeBtn);
+
         button.addEventListener("click", () => {
             switchTab(webView);
         });
@@ -184,6 +232,8 @@ function createNewTab(url) {
     const viewId = crypto.randomUUID(); // sufficient enough, UUID
     const firstView = createWebView((url || "https://google.com"), viewId);
     firstView.setAttribute("id", "webview_" + viewId);
+
+    removeActiveTabClass();
 
     const button = createOrModifyTabButton(firstView, viewId, "Loading...");
     if (button) {
@@ -236,15 +286,19 @@ function getCorrespondingTab(button) {
  * through this function, but if a page inside a WebView changes the URL, this will not be fired.
 */
 function goToURL(webView, url) {
-    if (url.startsWith("http://") ||
-    url.startsWith("https://") ||
-    url.startsWith("cascade://") ||
-    url.startsWith("view-source:") ||
-    url.startsWith("blob:")) {
+    if (
+        url.startsWith("http://") ||
+        url.startsWith("https://") ||
+        url.startsWith("cascade://") ||
+        url.startsWith("view-source:") ||
+        url.startsWith("blob:")
+    ) {
         webView.loadURL(url);
+    } else if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(url.trim())) { // tests to check if we should redirect with http/https
+        webView.loadURL("https://" + url.trim());
     } else {
-        // assume they're searching
-        webView.loadURL("https://www.google.com/search?client=cascade&q=" + url);
+        // assume the user is searching
+        webView.loadURL("https://www.google.com/search?client=cascade&q=" + encodeURIComponent(url));
     }
 }
 
@@ -256,10 +310,14 @@ function closeTab(webView) {
     if (!webView) return;
     const button = getCorrespondingButton(webView);
     // remove tab logic
-    focusedTab.remove();
-    focusedTab = null;
+    if (webView == focusedTab) {
+        focusedTab.remove();
+        focusedTab = null;
+    }
     if (button.nextElementSibling) {
         switchTab(getCorrespondingTab(button.nextElementSibling));
+    } else if (button.previousElementSibling && button.previousElementSibling.id != "new-tab") {
+        switchTab(getCorrespondingTab(button.previousElementSibling));
     }
     button.remove();
 }
@@ -289,8 +347,32 @@ window.electronAPI.onTargetBlankTabOpen((url) => {
     createNewTab(url);
 })
 
+window.addEventListener("beforeunload", () => {
+    const views = document.getElementsByClassName("view-box");
+    const urls = [];
+    for (let i = 0; i < views.length; i++) {
+        urls.push(views[i].getURL());
+    }
+    localStorage.setItem("cascade_tabs", JSON.stringify(urls));
+});
+
 document.addEventListener("DOMContentLoaded", () => {
-    createNewTab();
+    let restored = false;
+    const savedTabs = localStorage.getItem("cascade_tabs");
+    if (savedTabs) {
+        try {
+            const urls = JSON.parse(savedTabs);
+            if (Array.isArray(urls) && urls.length > 0) {
+                urls.forEach((url, idx) => {
+                    createNewTab(url);
+                });
+                restored = true;
+            }
+        } catch (e) {} // ignore
+    }
+    if (!restored) {
+        createNewTab();
+    }
     document.title = "Cascade Browser";
     const url_box = document.getElementById("url-box");
     if (url_box) {
@@ -298,12 +380,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (e["key"] == "Enter") {
                 url_box.blur();
                 if (focusedTab) {
-                    if (url_box.value.includes("cascade://newtab")) {
-                        var new_tab = 'file://' + __dirname + '/src/new_tab.html';
-                        goToURL(focusedTab, new_tab);
-                    } else {
-                        goToURL(focusedTab, url_box.value);
-                    }
+                    goToURL(focusedTab, url_box.value);
                 }
             }
         });
@@ -334,6 +411,8 @@ window.electronAPI.onContextMenuResponse(async (data) => {
         if (focusedTab && currentContextImage) createNewTab(currentContextImage);
     } else if (action == "copy-image-address") {
         if (focusedTab && currentContextImage) window.electronAPI.copyToClipboard(currentContextImage);
+    } else if (action == "open-link-in-new-tab") {
+        if (focusedTab && currentContextLink) createNewTab(currentContextLink);
     }
 })
 /*
@@ -357,8 +436,14 @@ window.electronAPI.onContextMenuResponse(async (data) => {
     }
 */
 
-window.electronAPI.onTabRefresh((isCache) => {
-    if (focusedTab) focusedTab.reload();
+window.electronAPI.onTabRefresh((isNoCache) => {
+    if (focusedTab) {
+        if (isNoCache) {
+            focusedTab.reloadIgnoringCache();
+        } else {
+            focusedTab.reload();
+        }
+    }
 })
 
 window.electronAPI.onTabClose(() => {

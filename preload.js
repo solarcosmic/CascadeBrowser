@@ -13,7 +13,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onTabNew: (callback) => ipcRenderer.on('new-tab', (_event) => callback()),
   copyToClipboard: (item) => ipcRenderer.send('copy-to-clipboard', item),
   openTab: (url) => ipcRenderer.send('open-tab', url),
-  onOpenTab: (callback) => {
-    window.addEventListener('open-tab', (e) => callback(e.detail));
-  }
+  onOpenTab: (callback) => window.addEventListener('open-tab', (e) => callback(e.detail)),
+  getVersions: () => ipcRenderer.invoke("about:getVersions")
+});
+
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'cascade-link-context') {
+        require('electron').ipcRenderer.sendToHost('cascade-link-context', event.data.href);
+    }
 });

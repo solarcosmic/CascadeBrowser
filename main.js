@@ -5,8 +5,10 @@
 */
 const { app, BrowserWindow, shell, ipcMain, globalShortcut, Menu, clipboard } = require("electron/main");
 const path = require("node:path");
-
+app.commandLine.appendSwitch('disable-frame-rate-limit')
+var about = null;
 function createWindow() {
+  console.log("Welcome to Cascade version v" + app.getVersion() + "!");
   const win = new BrowserWindow({
     width: 1024,
     height: 768,
@@ -28,7 +30,8 @@ function createWindow() {
 
   win.setMenu(null);
   win.loadFile('src/index.html')
-  win.webContents.openDevTools();
+  //win.webContents.openDevTools();
+  console.log("Main window created.");
 
   /* https://github.com/electron/electron/issues/40613 */
   app.on('web-contents-created', (e, contents) => {
@@ -50,12 +53,19 @@ function createWindow() {
   globalShortcut.register("CmdOrCtrl+T", () => {
     win.isFocused() && win.webContents.send('new-tab');
   });
+  globalShortcut.register("CmdOrCtrl+Shift+R", () => {
+    win.isFocused() && win.webContents.send('refresh-tab', true);
+  });
   ipcMain.on('open-tab', (event, url) => {
     win.webContents.send('open-tab', url);
   });
+  win.on("closed", () => {
+    if (about) about.close();
+  })
 }
 
 app.whenReady().then(() => {
+  ipcMain.handle('about:getVersions', retrieveAppVersions)
   createWindow()
 
   app.on('activate', () => {
@@ -64,6 +74,15 @@ app.whenReady().then(() => {
     }
   })
 })
+
+function retrieveAppVersions() {
+  return {
+    "electron": process.versions.electron,
+    "chrome": process.versions.chrome,
+    "os": process.getSystemVersion(),
+    "app": app.getVersion()
+  };
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -148,7 +167,7 @@ ipcMain.on("show-context-menu", (event, type, text) => {
   } else if (type == "image") {
     const menu = Menu.buildFromTemplate([
       {
-        label: 'Open image in New Tab',
+        label: 'Open Image in New Tab',
         click: () => {
           event.sender.send('context-menu-action', { action: 'open-image-in-new-tab', text });
         }
@@ -182,7 +201,7 @@ ipcMain.on("show-context-menu", (event, type, text) => {
         label: 'About Cascade',
         click: () => {
           //event.sender.send('context-menu-action', { action: 'about-cascade', text });
-          const about = new BrowserWindow({
+          about = new BrowserWindow({
             width: 324,
             height: 450,
             //titleBarStyle: 'hidden',
@@ -191,13 +210,46 @@ ipcMain.on("show-context-menu", (event, type, text) => {
             webPreferences: {
               preload: path.join(__dirname, 'preload.js')
             },
-            frame: true
+            frame: true,
+            resizable: false
           })
 
           about.setMenu(null);
           about.loadFile('src/about.html')
         }
       }
+    ]);
+    menu.popup();
+  } else if (type == "link") {
+    const menu = Menu.buildFromTemplate([
+      {
+        label: 'Open Link in New Tab',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'open-link-in-new-tab', text });
+        }
+      },
+      {
+        label: 'Copy Link',
+        click: () => {
+          clipboard.writeText(text);
+          //event.sender.send('context-menu-action', { action: 'copy-image' });
+        }
+      },
+      {
+        label: 'Search Google for "' + truncateString(text, 25) + '"',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'search-google', text });
+        }
+      },
+      {
+        type: "separator"
+      },
+      {
+        label: 'Inspect Element (Entire Page)',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'inspect-element' });
+        }
+      },
     ]);
     menu.popup();
   }

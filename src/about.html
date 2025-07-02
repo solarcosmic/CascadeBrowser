@@ -26,6 +26,9 @@
             width: 200px;
             height: 200px;
         }
+        #versions {
+            font-size: 12px;
+        }
     </style>
 </head>
 <body style="text-align: center;">
@@ -35,8 +38,18 @@
     </div>
     <div style="font-size: 38px;">Cascade</div>
     <p>A proof-of-concept simplistic web browser built in Electron.</p>
+    <p id="versions">Electron Version:</p>
     <a href="#" id="github-link" onclick="link_click('GitHub')">GitHub</a>
     <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const versions = await window.electronAPI.getVersions();
+            document.getElementById("versions").innerHTML = `
+            Cascade: ${versions["app"]}<br>
+            Electron: ${versions["electron"]}<br>
+            Chromium: ${versions["chrome"]}<br>
+            OS Version: ${versions["os"]}<br>
+            `
+        })
         function link_click(link_name) {
             if (link_name == "GitHub") window.electronAPI.openTab("https://github.com/solarcosmic/CascadeBrowser");
             window.close();

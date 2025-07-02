@@ -115,6 +115,32 @@
     #controls button:hover {
       background-color: #252525;
     }
+    .tab-button {
+      display: flex;
+      align-items: center;
+      position: relative;
+      padding-right: 24px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .tab-close-btn {
+      width: 14px;
+      height: 14px;
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      pointer-events: none;
+    }
+
+    .tab-button:hover .tab-close-btn {
+      opacity: 1;
+      pointer-events: auto;
+    }
   </style>
 </head>
 <body>
