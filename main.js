@@ -3,7 +3,7 @@
  * This project is licensed under the MIT license.
  * To view the license, see <https://opensource.org/licenses/MIT>.
 */
-const { app, BrowserWindow, shell, ipcMain, globalShortcut, Menu, clipboard } = require("electron/main");
+const { app, components, BrowserWindow, shell, ipcMain, globalShortcut, Menu, clipboard } = require("electron/main");
 const path = require("node:path");
 
 var about = null;
@@ -61,7 +61,9 @@ function createWindow() {
   })
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  await components.whenReady();
+    console.log('components ready:', components.status());
   ipcMain.handle('about:getVersions', retrieveAppVersions)
   createWindow()
 
