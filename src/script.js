@@ -17,7 +17,6 @@ function createWebView(url, uuid) {
     document.getElementById("container").appendChild(webView);
     attachContextMenu(webView);
     webView.addEventListener('dom-ready', () => {
-        // hacky method to get links to work properly. does not support iframes and that stuff.
         webView.executeJavaScript(`
             function addLinkContextMenuListener(win) {
                 win.document.addEventListener('contextmenu', function(e) {
@@ -33,8 +32,6 @@ function createWebView(url, uuid) {
             }
             addLinkContextMenuListener(window);
         `);
-        //const modifiedUserAgent = webView.getUserAgent().replace(/Electron\/\S*\s*/i, "").replace("cascadebrowser", "Cascade");
-        //webView.setUserAgent(modifiedUserAgent);
         webView.addEventListener("page-title-updated", (e, title, explicitSet) => {
             if (focusedTab == webView) {
                 createOrModifyTabButton(webView, uuid);
@@ -415,26 +412,6 @@ window.electronAPI.onContextMenuResponse(async (data) => {
         if (focusedTab && currentContextLink) createNewTab(currentContextLink);
     }
 })
-/*
- else if (action == "inspect-element-region") {
-        if (focusedTab) {
-            if (contextRightClickX != null && contextRightClickY != null) {
-                const imgSrc = await focusedTab.executeJavaScript(`
-                    (function() {
-                        const scrollX = window.scrollX || document.documentElement.scrollLeft || document.body.scrollLeft || 0;
-                        const scrollY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-                        let el = document.elementFromPoint(${contextRightClickX} - scrollX, ${contextRightClickY} - scrollY);
-                        if (el && el.tagName && el.tagName.toLowerCase() === 'img') return el.src;
-                        return null;
-                    })();
-                `);
-                if (imgSrc) {
-                    focusedTab.inspectElement(contextRightClickX, contextRightClickY);
-                }
-            }
-        }
-    }
-*/
 
 window.electronAPI.onTabRefresh((isNoCache) => {
     if (focusedTab) {

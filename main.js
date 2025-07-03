@@ -12,8 +12,6 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1024,
     height: 768,
-    //titleBarStyle: 'hidden',
-    //frame: false,
     backgroundColor: "#fff",
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -30,7 +28,6 @@ function createWindow() {
 
   win.setMenu(null);
   win.loadFile('src/index.html')
-  //win.webContents.openDevTools();
   console.log("Main window created.");
 
   /* https://github.com/electron/electron/issues/40613 */
@@ -172,12 +169,6 @@ ipcMain.on("show-context-menu", (event, type, text) => {
           event.sender.send('context-menu-action', { action: 'open-image-in-new-tab', text });
         }
       },
-      /* {
-        label: 'Copy Image',
-        click: () => {
-          event.sender.send('context-menu-action', { action: 'copy-image' });
-        }
-      }, */
       {
         label: 'Copy Image Address',
         click: () => {
@@ -200,12 +191,9 @@ ipcMain.on("show-context-menu", (event, type, text) => {
       {
         label: 'About Cascade',
         click: () => {
-          //event.sender.send('context-menu-action', { action: 'about-cascade', text });
           about = new BrowserWindow({
             width: 324,
-            height: 450,
-            //titleBarStyle: 'hidden',
-            //frame: false,
+            height: 550,
             backgroundColor: "#fff",
             webPreferences: {
               preload: path.join(__dirname, 'preload.js')
@@ -236,7 +224,6 @@ ipcMain.on("show-context-menu", (event, type, text) => {
         label: 'Copy Link',
         click: () => {
           clipboard.writeText(text);
-          //event.sender.send('context-menu-action', { action: 'copy-image' });
         }
       },
       {
