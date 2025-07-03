@@ -62,8 +62,10 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  await components.whenReady();
-    console.log('components ready:', components.status());
+  if (process.platform != "linux") {
+      await components.whenReady();
+      console.log('components ready:', components.status());
+  }
   ipcMain.handle('about:getVersions', retrieveAppVersions)
   createWindow()
 
