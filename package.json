@@ -17,6 +17,9 @@
   "build": {
     "appId": "net.solarcosmic.cascadebrowser",
     "productName": "Cascade Browser",
+    "electronDownload": {
+      "mirror": "https://github.com/castlabs/electron-releases/releases/download/v"
+    },
     "directories": {
       "output": "dist"
     },
