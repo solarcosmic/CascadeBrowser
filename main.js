@@ -5,7 +5,7 @@
 */
 const { app, BrowserWindow, shell, ipcMain, globalShortcut, Menu, clipboard } = require("electron/main");
 const path = require("node:path");
-app.commandLine.appendSwitch('disable-frame-rate-limit')
+
 var about = null;
 function createWindow() {
   console.log("Welcome to Cascade version v" + app.getVersion() + "!");
@@ -216,6 +216,10 @@ ipcMain.on("show-context-menu", (event, type, text) => {
 
           about.setMenu(null);
           about.loadFile('src/about.html')
+
+          about.on('closed', () => {
+            about = null;
+          });
         }
       }
     ]);
