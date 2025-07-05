@@ -256,12 +256,6 @@ ipcMain.on("show-context-menu", (event, type, text) => {
           event.sender.send('context-menu-action', { action: 'pin-tab', text });
         }
       },
-      {
-        label: 'Copy Link',
-        click: () => {
-          event.sender.send('context-menu-action', { action: 'copy-link-from-tab-button', text });
-        }
-      }
     ]);
     menu.popup();
   } else if (type == "tab-select-pinned") {
@@ -270,12 +264,6 @@ ipcMain.on("show-context-menu", (event, type, text) => {
         label: 'Unpin Tab',
         click: () => {
           event.sender.send('context-menu-action', { action: 'unpin-tab', text });
-        }
-      },
-      {
-        label: 'Copy Link',
-        click: () => {
-          event.sender.send('context-menu-action', { action: 'copy-link-from-tab-button', text });
         }
       }
     ]);
