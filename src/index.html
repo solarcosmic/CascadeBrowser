@@ -26,17 +26,32 @@
       background-color: #1a1a1a;
       width: 250px;
       color: #ffffff;
+      height: 100vh;
+      overflow-y: auto;
+      box-sizing: border-box;
+      scrollbar-gutter: stable overlay;
+    }
+    #sidebar::-webkit-scrollbar {
+      width: 10px;
+      background: #181818;
+    }
+    #sidebar::-webkit-scrollbar-thumb {
+      background: #292929;
+      border-radius: 6px;
+    }
+    #sidebar::-webkit-scrollbar-thumb:hover {
+      background: #444444;
     }
     .view-box {
       right: 0;
       flex-grow: 1;
       background-color: #141414;
     }
-    #tablist {
+    #tablist, #normal-tabs, #pinned-tabs {
       display: flex;
       flex-direction: column;
       padding: 5px 5px;
-      margin-top: -7.5px;
+      margin-top: -7.7px;
     }
     #tablist button {
       text-align: left;
@@ -44,7 +59,7 @@
       color: #ffffff;
       border: none;
       border-radius: 8px;
-      padding: 10px 20px;
+      padding: 10px 17.5px;
       margin-top: 5px;
     }
     #tablist button:hover {
@@ -141,6 +156,12 @@
       opacity: 1;
       pointer-events: auto;
     }
+
+    #new-tab {
+       max-width: 96%;
+       margin-left: 5px;
+       margin-bottom: 2px;
+    }
   </style>
 </head>
 <body>
@@ -157,7 +178,9 @@
         <input type="text" id="url-box"></input>
         <hr>
         <div id="tablist">
+          <div id="pinned-tabs"></div>
           <button id="new-tab"><img class="svg_side_button" src="assets/plus-solid.svg" style="width: 12px; height: 12px; margin-right: 5px; margin-bottom: -1.75px;"></img> New Tab</button>
+          <div id="normal-tabs"></div>
         </div>
       </div>
     </div>

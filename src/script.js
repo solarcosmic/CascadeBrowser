@@ -204,7 +204,15 @@ function createOrModifyTabButton(webView, uuid, customTitle) {
         button.addEventListener("click", () => {
             switchTab(webView);
         });
-        document.getElementById("tablist").appendChild(button);
+        button.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            if (isTabPinned(uuid)) {
+                window.electronAPI.showContextMenu("tab-select-pinned", uuid);
+            } else {
+                window.electronAPI.showContextMenu("tab-select", uuid);
+            }
+        });
+        document.getElementById("normal-tabs").appendChild(button);
         return button;
     }
 }
@@ -297,6 +305,32 @@ function goToURL(webView, url) {
         // assume the user is searching
         webView.loadURL("https://www.google.com/search?client=cascade&q=" + encodeURIComponent(url));
     }
+}
+
+function getButtonFromTabID(uuid) {
+    const tablist = document.getElementById("tablist");
+    const tab_buttons = tablist.querySelectorAll(".tab-button");
+
+    for (const item of tab_buttons) {
+        const newID = item.id.replace("viewbutton_", "");
+        if (newID == uuid) return item;
+    }
+}
+
+function isTabPinned(uuid) {
+    const button = getButtonFromTabID(uuid);
+    if (button.parentElement.id == "pinned-tabs") return true;
+    return false;
+}
+
+function pinTab(button) {
+    const pinned_tabs = document.getElementById("pinned-tabs");
+    pinned_tabs.appendChild(button);
+}
+
+function unpinTab(button) {
+    const normal_tabs = document.getElementById("normal-tabs");
+    normal_tabs.prepend(button);
 }
 
 /*
@@ -410,6 +444,10 @@ window.electronAPI.onContextMenuResponse(async (data) => {
         if (focusedTab && currentContextImage) window.electronAPI.copyToClipboard(currentContextImage);
     } else if (action == "open-link-in-new-tab") {
         if (focusedTab && currentContextLink) createNewTab(currentContextLink);
+    } else if (action == "pin-tab") {
+        if (focusedTab) pinTab(getButtonFromTabID(text));
+    } else if (action == "unpin-tab") {
+        if (focusedTab) unpinTab(getButtonFromTabID(text));
     }
 })
 

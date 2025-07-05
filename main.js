@@ -28,6 +28,7 @@ function createWindow() {
 
   win.setMenu(null);
   win.loadFile('src/index.html')
+  win.webContents.openDevTools();
   console.log("Main window created.");
 
   /* https://github.com/electron/electron/issues/40613 */
@@ -62,7 +63,7 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  if (process.platform != "linux") {
+  if (process.platform != "linux") { // win32 and darwin (macOS)
       await components.whenReady();
       console.log('components ready:', components.status());
   }
@@ -245,6 +246,38 @@ ipcMain.on("show-context-menu", (event, type, text) => {
           event.sender.send('context-menu-action', { action: 'inspect-element' });
         }
       },
+    ]);
+    menu.popup();
+  } else if (type == "tab-select") {
+    const menu = Menu.buildFromTemplate([
+      {
+        label: 'Pin Tab',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'pin-tab', text });
+        }
+      },
+      {
+        label: 'Copy Link',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'copy-link-from-tab-button', text });
+        }
+      }
+    ]);
+    menu.popup();
+  } else if (type == "tab-select-pinned") {
+    const menu = Menu.buildFromTemplate([
+      {
+        label: 'Unpin Tab',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'unpin-tab', text });
+        }
+      },
+      {
+        label: 'Copy Link',
+        click: () => {
+          event.sender.send('context-menu-action', { action: 'copy-link-from-tab-button', text });
+        }
+      }
     ]);
     menu.popup();
   }
