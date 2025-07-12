@@ -28,7 +28,6 @@ function createWindow() {
 
   win.setMenu(null);
   win.loadFile('src/index.html')
-  win.webContents.openDevTools();
   console.log("Main window created.");
 
   /* https://github.com/electron/electron/issues/40613 */
@@ -65,7 +64,6 @@ function createWindow() {
 app.whenReady().then(async () => {
   if (process.platform != "linux") { // win32 and darwin (macOS)
       await components.whenReady();
-      console.log('components ready:', components.status());
   }
   ipcMain.handle('about:getVersions', retrieveAppVersions)
   createWindow()

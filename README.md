@@ -29,6 +29,29 @@ Cascade uses `WebView`(s) (yes, I know) as its main driver for Chromium. There a
 ![Screenshot From 2025-07-01 22-22-06](https://github.com/user-attachments/assets/1efc13d8-edc8-44e5-91d2-96e5dc633e36)
 Example of the GitHub landing page running on a somewhat old version of Cascade (GNOME 48)
 
+## How to Build
+Clone the repository and open a terminal window, but make sure you run the following commands with administrative privileges (e.g. Administrator on Windows, `sudo` on Linux/macOS).
+
+In the repository main folder (where this README and main.js should be) run the following command to install dependencies, this may take a while:
+```bash
+npm i
+```
+
+To test out Cascade without building it, you can run:
+```bash
+npm run start
+```
+
+Depending on what platform you want to build for:
+```bash
+npm run build            # Current OS
+npm run build-win        # Windows (win32)
+npm run build-linux      # Linux
+npm run build-mac        # macOS (darwin) untested
+```
+
+Running in administrative mode prevents any symbolic link errors. You can find the built binary/executable once done in `/dist`.
+
 ## AI Disclosure (Gemini, GPT-4o)
 AI was used in the making of this project, but only to:
 - Fix small issues that were the outcome of other additions
