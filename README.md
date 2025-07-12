@@ -1,4 +1,5 @@
-![cascade_banner2](https://github.com/user-attachments/assets/2289eab6-b0b6-4cf1-af0a-b0111035fc9c)
+![cascade_banner1_(1)](https://github.com/user-attachments/assets/2874a687-e4d6-43a4-807c-40116307390c)
+
 # Cascade (Browser)
 A proof-of-concept simplistic web browser built in Electron.
 
